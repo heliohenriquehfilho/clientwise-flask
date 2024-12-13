@@ -1,0 +1,76 @@
+# Byte-compiled / optimized / compiled Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+env.bak/
+*.egg-info/
+.dist/
+build/
+*.egg
+
+# Flask settings
+instance/
+*.db
+*.sqlite3
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.db
+
+# Environment variables
+.env
+*.env
+.env.local
+.env.*
+
+# IDE / Editor specific files
+.vscode/
+.idea/
+*.swp
+*~
+*.bak
+*.tmp
+*.pid
+*.seed
+*.cover
+
+# Pytest
+.cache/
+
+# MacOS
+.DS_Store
+
+# PyInstaller
+*.spec
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Coverage reports
+htmlcov/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Docker
+*.dockerfile
+*.tar
+
+# Miscellaneous
+*.log
+*.out
+*.bak
+*.tmp
+*.lock
+*.pid
