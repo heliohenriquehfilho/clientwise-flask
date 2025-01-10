@@ -1,0 +1,137 @@
+/* Reset básico */
+body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, a, button {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333;
+    background-color: #f4f4f9;
+}
+
+header {
+    background-color: #143b85;
+    color: white;
+    padding: 1rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+header nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+
+header nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+header nav ul li a:hover {
+    color: #ffdd57;
+}
+
+.flash-messages {
+    margin: 1rem auto;
+    padding: 1rem;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 5px;
+    background-color: #ffeeba;
+    color: #856404;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Layout principal */
+main {
+    padding: 2rem;
+    margin: 0 auto;
+    max-width: 1200px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    header nav ul {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    main {
+        padding: 1rem;
+    }
+}
+
+/* Geral */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f5f5f5;
+}
+
+/* Estilização da tabela */
+.table-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    background: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Cabeçalho da tabela */
+.table-container thead {
+    background: #031257;
+    color: white;
+}
+
+.table-container th {
+    padding: 12px;
+    text-align: left;
+}
+
+/* Linhas da tabela */
+.table-container tr:nth-child(even) {
+    background: #f2f2f2;
+}
+
+.table-container td {
+    padding: 12px;
+    text-align: left;
+}
+
+/* Botões */
+.table-container button {
+    padding: 6px 10px;
+    border: none;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.table-container button:hover {
+    background-color: #c0392b;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .table-container table {
+        font-size: 14px;
+    }
+}
