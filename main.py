@@ -3,6 +3,7 @@ from supabase import create_client
 from dotenv import load_dotenv
 from obter_dados_tabela import obter_dados_tabela
 import pandas as pd
+import datetime
 import os
 import re
 
@@ -113,6 +114,126 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('dashboard.html', user_id=session['user_id'])
+
+@app.route("/cadastro_cliente", methods=["GET", "POST"])
+def cadastro_cliente():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    if request.method == "POST":
+        opcao_cadastro = request.form.get("opcao_cadastro")
+
+        if opcao_cadastro == "manual":
+            cliente = {
+                "nome": request.form.get("nome"),
+                "contato": request.form.get("contato"),
+                "endereco": request.form.get("endereco"),
+                "email": request.form.get("email"),
+                "user_id": session['user_id']
+            }
+
+            if all(cliente.values()):
+                # Verificar duplicação
+                try:
+                    resposta = supabase.table("clientes") \
+                        .select("id") \
+                        .filter("nome", "eq", cliente["nome"]) \
+                        .filter("contato", "eq", cliente["contato"]) \
+                        .filter("endereco", "eq", cliente["endereco"]) \
+                        .filter("email", "eq", cliente["email"]) \
+                        .filter("user_id", "eq", cliente["user_id"]) \
+                        .execute()
+
+                    if resposta.data:
+                        flash("Cliente já cadastrado!", "danger")
+                    else:
+                        supabase.table("clientes").insert(cliente).execute()
+                        flash("Cliente cadastrado com sucesso!", "success")
+                except Exception as e:
+                    flash(f"Erro ao cadastrar cliente: {e}", "danger")
+            else:
+                flash("Por favor, preencha todos os campos.", "danger")
+
+        elif opcao_cadastro == "csv":
+            file = request.files.get("csv_file")
+            if file and file.filename.endswith(".csv"):
+                try:
+                    data = pd.read_csv(file)
+                    for _, row in data.iterrows():
+                        cliente = {
+                            "nome": row.get("nome"),
+                            "contato": row.get("contato"),
+                            "endereco": row.get("endereco", ""),
+                            "email": row.get("email"),
+                            "user_id": session['user_id']
+                        }
+
+                        # Validar campos e evitar duplicados
+                        if all([cliente["nome"], cliente["contato"], cliente["email"]]):
+                            resposta = supabase.table("clientes") \
+                                .select("id") \
+                                .filter("nome", "eq", cliente["nome"]) \
+                                .filter("contato", "eq", cliente["contato"]) \
+                                .filter("email", "eq", cliente["email"]) \
+                                .filter("user_id", "eq", cliente["user_id"]) \
+                                .execute()
+
+                            if not resposta.data:
+                                supabase.table("clientes").insert(cliente).execute()
+                    flash("Importação concluída!", "success")
+                except Exception as e:
+                    flash(f"Erro ao processar o CSV: {e}", "danger")
+            else:
+                flash("Por favor, envie um arquivo CSV válido.", "danger")
+
+    return render_template("clientes.html")
+
+min_date = datetime.date(1900, 1, 1)
+
+@app.route("/clientes", methods=["GET", "POST"])
+def clientes():
+    user_id = session['user_id']
+    clientes = supabase.table("clientes").select("*").eq("user_id", user_id).execute().data
+    vendas = supabase.table("vendas").select("*").eq("user_id", user_id).execute().data
+
+    # Convertendo a coluna 'ativo' de True/False para texto
+    for cliente in clientes:
+        cliente["ativo"] = "Ativo" if cliente["ativo"] else "Inativo"
+
+    if request.method == "POST":
+        # Atualizar cliente
+        cliente_id = request.form.get("client_id")
+        nome = request.form.get("nome")
+        contato = request.form.get("contato")
+        endereco = request.form.get("endereco")
+        email = request.form.get("email")
+        bairro = request.form.get("bairro")
+        cidade = request.form.get("cidade")
+        estado = request.form.get("estado")
+        cep = request.form.get("cep")
+        ativo = request.form.get("ativo") == "on"
+        genero = request.form.get("genero")
+        data_nascimento = request.form.get("data_nascimento")
+
+        cliente_atualizado = {
+            "nome": nome,
+            "contato": contato,
+            "endereco": endereco,
+            "email": email,
+            "bairro": bairro,
+            "cidade": cidade,
+            "estado": estado,
+            "cep": cep,
+            "ativo": ativo,
+            "genero": genero,
+            "data_nascimento": data_nascimento,
+        }
+
+        supabase.table("clientes").update(cliente_atualizado).eq("client__c", cliente_id).execute()
+        flash("Cliente atualizado com sucesso!", "success")
+        return redirect(url_for("gerenciador_de_clientes"))
+
+    return render_template("gerenciador_clientes.html", clientes=clientes, vendas=vendas, min_date=min_date)
+
 
 @app.route('/sales', methods=['GET', 'POST'])
 def sales():

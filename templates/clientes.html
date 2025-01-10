@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+    <h1 class="text-center">👤 Cadastro de Cliente</h1>
+
+    <!-- Mensagens de Status -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert-container">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Formulário de Cadastro -->
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label>Como deseja cadastrar os clientes?</label><br>
+            <input type="radio" name="opcao_cadastro" value="manual" checked> Cadastro Manual<br>
+            <input type="radio" name="opcao_cadastro" value="csv"> Upload de CSV<br>
+        </div>
+
+        <div id="form-manual">
+            <div class="mb-3">
+                <label for="nome">Nome do Cliente:</label>
+                <input type="text" name="nome" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label for="contato">Contato:</label>
+                <input type="text" name="contato" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label for="endereco">Endereço:</label>
+                <input type="text" name="endereco" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label for="email">Email:</label>
+                <input type="email" name="email" class="form-control">
+            </div>
+        </div>
+
+        <div id="form-csv" style="display: none;">
+            <div class="mb-3">
+                <label for="csv_file">Upload de CSV:</label>
+                <input type="file" name="csv_file" class="form-control" accept=".csv">
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+    </form>
+</div>
+
+<script>
+    // Alternar entre os formulários
+    document.querySelectorAll('input[name="opcao_cadastro"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            document.getElementById('form-manual').style.display = radio.value === 'manual' ? 'block' : 'none';
+            document.getElementById('form-csv').style.display = radio.value === 'csv' ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}

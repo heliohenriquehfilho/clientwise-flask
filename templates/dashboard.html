@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Bem-vindo ao Dashboard, {{ user_id }}!</h1>
-<p>Escolha uma funcionalidade no menu acima.</p>
+<div class="container my-4">
+    <h1 class="text-center">📊 Dashboard</h1>
+
+    <!-- Outros conteúdos do dashboard -->
+
+    <!-- Botão para redirecionar para o cadastro de clientes -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('cadastro_cliente') }}" class="btn btn-primary btn-lg">Ir para Cadastro de Clientes</a>
+        <br>
+        <a href="{{ url_for('clientes') }}" class="btn btn-primary btn-lg">Ir para Dashboard de Clientes</a>
+    </div>
+</div>
 {% endblock %}

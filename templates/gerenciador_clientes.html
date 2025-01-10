@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center">🫂 Gerenciador de Clientes</h1>
+
+    <!-- Exibe tabela de clientes -->
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Endereço</th>
+            <th>Email</th>
+            <th>Ativo</th>
+            <th>Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for cliente in clientes %}
+        <tr>
+            <td>{{ cliente.nome }}</td>
+            <td>{{ cliente.endereco }}</td>
+            <td>{{ cliente.email }}</td>
+            <td>{{ cliente.ativo }}</td>
+            <td>
+                <!-- Botão para editar -->
+                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal-{{ cliente.client__c }}">Editar</button>
+            </td>
+        </tr>
+
+        <!-- Modal de edição -->
+        <div class="modal fade" id="editModal-{{ cliente.client__c }}" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editModalLabel">Editar Cliente</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="client_id" value="{{ cliente.client__c }}">
+                            <div class="mb-3">
+                                <label for="nome" class="form-label">Nome</label>
+                                <input type="text" class="form-control" id="nome" name="nome" value="{{ cliente.nome }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contato" class="form-label">Contato</label>
+                                <input type="text" class="form-control" id="contato" name="contato" value="{{ cliente.contato }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ cliente.email }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="ativo" class="form-label">Ativo</label>
+                                <input type="checkbox" id="ativo" name="ativo" {% if cliente.ativo == "Ativo" %}checked{% endif %}>
+                            </div>
+                            <div class="mb-3">
+                                <label for="genero" class="form-label">Gênero</label>
+                                <select class="form-select" id="genero" name="genero">
+                                    <option value="Masculino" {% if cliente.genero == "Masculino" %}selected{% endif %}>Masculino</option>
+                                    <option value="Feminino" {% if cliente.genero == "Feminino" %}selected{% endif %}>Feminino</option>
+                                    <option value="Não Binário" {% if cliente.genero == "Não Binário" %}selected{% endif %}>Não Binário</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+{% endblock %}
+
