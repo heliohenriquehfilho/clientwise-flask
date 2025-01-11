@@ -1,81 +1,128 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="container my-5">
-    <h1 class="text-center">🫂 Gerenciador de Clientes</h1>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Vendas</title>
+    <!-- Adicionando o CSS do Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 
-    <!-- Exibe tabela de clientes -->
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th>Nome</th>
-            <th>Endereço</th>
-            <th>Email</th>
-            <th>Ativo</th>
-            <th>Ações</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for cliente in clientes %}
-        <tr>
-            <td>{{ cliente.nome }}</td>
-            <td>{{ cliente.endereco }}</td>
-            <td>{{ cliente.email }}</td>
-            <td>{{ cliente.ativo }}</td>
-            <td>
-                <!-- Botão para editar -->
-                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal-{{ cliente.client__c }}">Editar</button>
-            </td>
-        </tr>
+<div class="container my-4">
+    <!-- Header Principal -->
+    <div class="text-center mb-4">
+        <h1 class="fw-bold">🫂 Gerenciador de Clientes</h1>
+    </div>
 
-        <!-- Modal de edição -->
-        <div class="modal fade" id="editModal-{{ cliente.client__c }}" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form method="POST">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editModalLabel">Editar Cliente</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Mensagens de Status -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alert-container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Tabela de Clientes -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white text-center">
+            <strong>Lista de Clientes</strong>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Contato</th>
+                        <th>Email</th>
+                        <th>Ativo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td>{{ cliente['nome'] }}</td>
+                        <td>{{ cliente['contato'] }}</td>
+                        <td>{{ cliente['email'] }}</td>
+                        <td>{{ 'Sim' if cliente['ativo'] else 'Não' }}</td>
+                        <td>
+                            <button 
+                                class="btn btn-warning btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editClienteModal"
+                                onclick="preencherModalEdicao({{ cliente|tojson }})">
+                                Editar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editClienteModal" tabindex="-1" aria-labelledby="editClienteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="/edit_cliente" method="POST">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editClienteModalLabel">Editar Cliente</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="client_id" id="edit-client-id">
+                        <div class="mb-3">
+                            <label for="edit-nome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="edit-nome" name="nome" required>
                         </div>
-                        <div class="modal-body">
-                            <input type="hidden" name="client_id" value="{{ cliente.client__c }}">
-                            <div class="mb-3">
-                                <label for="nome" class="form-label">Nome</label>
-                                <input type="text" class="form-control" id="nome" name="nome" value="{{ cliente.nome }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="contato" class="form-label">Contato</label>
-                                <input type="text" class="form-control" id="contato" name="contato" value="{{ cliente.contato }}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" value="{{ cliente.email }}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="ativo" class="form-label">Ativo</label>
-                                <input type="checkbox" id="ativo" name="ativo" {% if cliente.ativo == "Ativo" %}checked{% endif %}>
-                            </div>
-                            <div class="mb-3">
-                                <label for="genero" class="form-label">Gênero</label>
-                                <select class="form-select" id="genero" name="genero">
-                                    <option value="Masculino" {% if cliente.genero == "Masculino" %}selected{% endif %}>Masculino</option>
-                                    <option value="Feminino" {% if cliente.genero == "Feminino" %}selected{% endif %}>Feminino</option>
-                                    <option value="Não Binário" {% if cliente.genero == "Não Binário" %}selected{% endif %}>Não Binário</option>
-                                </select>
-                            </div>
+                        <div class="mb-3">
+                            <label for="edit-contato" class="form-label">Contato</label>
+                            <input type="text" class="form-control" id="edit-contato" name="contato" required>
                         </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Salvar</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <div class="mb-3">
+                            <label for="edit-email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="edit-email" name="email" required>
                         </div>
-                    </form>
-                </div>
+                        <div class="mb-3">
+                            <label for="edit-ativo" class="form-label">Ativo</label>
+                            <input type="checkbox" id="edit-ativo" name="ativo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-genero" class="form-label">Gênero</label>
+                            <select class="form-select" id="edit-genero" name="genero">
+                                <option value="Masculino">Masculino</option>
+                                <option value="Feminino">Feminino</option>
+                                <option value="Não Binário">Não Binário</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
             </div>
         </div>
-        {% endfor %}
-        </tbody>
-    </table>
+    </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+
 {% endblock %}
 
+<script>
+    function preencherModalEdicao(cliente) {
+        document.getElementById('edit-client-id').value = cliente.client__c;
+        document.getElementById('edit-nome').value = cliente.nome;
+        document.getElementById('edit-contato').value = cliente.contato;
+        document.getElementById('edit-email').value = cliente.email;
+        document.getElementById('edit-ativo').checked = cliente.ativo;
+        document.getElementById('edit-genero').value = cliente.genero || "";
+    }
+</script>
