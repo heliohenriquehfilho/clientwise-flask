@@ -1,18 +1,17 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from supabase import create_client
 from dotenv import load_dotenv
-from obter_dados_tabela import obter_dados_tabela
 import pandas as pd
 import datetime
 import os
 import re
 
-# Configuração inicial
+# Initial setup
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 
-# Configuração do Supabase
+# Supabase setup
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
