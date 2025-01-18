@@ -228,18 +228,23 @@ def clientes():
 
     if request.method == "POST":
         # Atualizar cliente
-        cliente_id = user_id
-        nome = request.form.get("nome")
-        contato = request.form.get("contato")
-        endereco = request.form.get("endereco")
-        email = request.form.get("email")
-        bairro = request.form.get("bairro")
-        cidade = request.form.get("cidade")
-        estado = request.form.get("estado")
-        cep = request.form.get("cep")
-        ativo = request.form.get("ativo") == "on"
-        genero = request.form.get("genero")
-        data_nascimento = request.form.get("data_nascimento")
+        cliente_id = request.form.get("clientid")
+        print(cliente_id)
+        nome = request.form.get("editNome")
+        contato = request.form.get("editContato")
+        endereco = request.form.get("editEndereco")
+        email = request.form.get("editEmail")
+        bairro = request.form.get("editBairro")
+        cidade = request.form.get("editCidade")
+        estado = request.form.get("editEstado")
+        cep = request.form.get("editCep")
+        genero = request.form.get("editGenero")
+        data_nascimento = request.form.get("editDataNascimento")
+
+        if not data_nascimento:
+            data_nascimento = None
+
+        ativo = request.form.get("editAtivo") == "true"  # Convertendo string para booleano
 
         cliente_atualizado = {
             "nome": nome,
@@ -250,14 +255,14 @@ def clientes():
             "cidade": cidade,
             "estado": estado,
             "cep": cep,
-            "ativo": ativo,
             "genero": genero,
             "data_nascimento": data_nascimento,
+            "ativo": ativo,
         }
 
         supabase.table("clientes").update(cliente_atualizado).eq("client__c", cliente_id).execute()
         flash("Cliente atualizado com sucesso!", "success")
-        return redirect(url_for("gerenciador_de_clientes"))
+        return render_template("gerenciador_clientes.html", clientes=clientes, vendas=vendas, min_date=min_date)
 
     return render_template("gerenciador_clientes.html", clientes=clientes, vendas=vendas, min_date=min_date)
 
