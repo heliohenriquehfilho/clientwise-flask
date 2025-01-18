@@ -1,3 +1,5 @@
+from logging import exception
+
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from supabase import create_client
 from dotenv import load_dotenv
@@ -266,28 +268,64 @@ def sales():
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-
     clientes = obter_dados_tabela("clientes", user_id)
     produtos = obter_dados_tabela("produtos", user_id)
     vendedores = obter_dados_tabela("vendedores", user_id)
 
-    if request.method == 'POST':
-        venda_id = request.form.get('venda_id')
-        if venda_id:
-            supabase.table("vendas").delete().eq("id", venda_id).execute()
-            flash(f"Venda '{venda_id}' excluída com sucesso.", "success")
-
+    clientes_df = pd.DataFrame(clientes)
     vendas = supabase.table("vendas").select("*").eq("user_id", user_id).execute().data
-    
+
+    # Processamento de vendas existentes
     if vendas:
         for venda in vendas:
             venda['produtos_formatados'] = formatar_produtos(venda.get('produtos'))
-
         vendas_df = pd.DataFrame(vendas)
-        return render_template('sales.html', vendas=vendas_df.to_dict(orient='records'))
-    
-    flash("Nenhuma venda encontrada.", "info")
-    return render_template('sales.html', clientes=clientes, produtos=produtos, vendedores=vendedores)
+    else:
+        vendas_df = pd.DataFrame()
+
+    # Inserção de uma nova venda
+    if request.method == "POST":
+        produto = request.form.get("produto")
+        cliente = request.form.get("cliente")
+        vendedor = request.form.get("vendedor")
+        data_venda = request.form.get("data_venda")
+        pagamento = request.form.get("pagamento")
+        quantidade = request.form.get("quantidade")
+
+        # Buscar preço do produto
+        preco_unitario = next((p['preco'] for p in produtos if p['nome'] == produto), None)
+        if preco_unitario is None:
+            flash("Erro: Produto não encontrado.", "fail")
+            return redirect(url_for('sales'))
+
+        valor = int(quantidade) * float(preco_unitario)
+
+        venda = {
+            "user_id": user_id,
+            "produtos": produto,
+            "cliente": cliente,
+            "vendedor": vendedor,
+            "data_venda": data_venda,
+            "pagamento": pagamento,
+            "quantidade": quantidade,
+            "valor": valor,
+        }
+
+        try:
+            supabase.table("vendas").insert(venda).execute()
+            flash("Venda cadastrada com sucesso!", "success")
+        except Exception as e:
+            flash(f"Erro ao cadastrar venda: {e}", "fail")
+
+        return redirect(url_for('sales'))  # Redirecionamento após POST
+
+    return render_template(
+        'sales.html',
+        clientes_df=clientes_df.to_dict('records'),
+        vendas=vendas_df.to_dict(orient='records'),
+        vendedores=vendedores,
+        produtos=produtos,
+    )
 
 # Rota para gerenciador financeiro
 @app.route('/finances')
@@ -342,27 +380,8 @@ def investments():
 
     investimentos = obter_dados_tabela("investimento", user_id)
     investimentos_df = pd.DataFrame(investimentos)
-    print(investimentos_df)
 
     return render_template('investments.html', investimentos_df=investimentos_df.to_dict('records'))
-
-@app.route('/cadastro_venda', methods=["GET", "POST"])
-def cadastro_venda():
-    user_id = session.get('user_id')
-    if not user_id:
-        flash("Faça login para acessar esta funcionalidade.", "error")
-        return redirect(url_for('login'))
-
-    clientes = obter_dados_tabela("clientes", user_id)
-    produtos = obter_dados_tabela("produtos", user_id)
-    vendedores = obter_dados_tabela("vendedores", user_id)
-
-    if not clientes:
-        flash("Nenhum cliente encontrado. Cadastre clientes primeiro.", "info")
-
-    # Lógica de cadastro de venda permanece inalterada...
-    return render_template("sales.html", clientes=clientes, produtos=produtos, vendedores=vendedores)
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

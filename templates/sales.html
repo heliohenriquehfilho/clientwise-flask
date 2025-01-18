@@ -38,12 +38,12 @@
                 <strong>🛒 Registrar Nova Venda</strong>
             </div>
             <div class="card-body">
-                <form action="/add_sale" method="POST">
+                <form method="POST">
                     <div class="mb-3">
                         <label for="cliente">Selecione o Cliente:</label>
                         <select name="cliente" required>
-                            {% for cliente in clientes %}
-                              <option value="{{ cliente }}">{{ cliente }}</option>
+                            {% for cliente in clientes_df %}
+                              <option value="{{ cliente['nome'] }}">{{ cliente['nome'] }}</option>
                             {% endfor %}
                           </select>                          
                         <br><br>
@@ -53,7 +53,7 @@
                         <label for="vendedor">Selecione o Vendedor:</label>
                         <select name="vendedor">
                             {% for vendedor in vendedores %}
-                            <option value="{{ vendedor }}">{{ vendedor }}</option>
+                            <option value="{{ vendedor['nome'] }}">{{ vendedor['nome'] }}</option>
                             {% endfor %}
                         </select>
                         <br><br>
@@ -72,16 +72,22 @@
                             <option value="Débito">Débito</option>
                             <option value="Pix">Pix</option>
                             <option value="Dinheiro">Dinheiro</option>
+                            <option value="Boleto">Boleto</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="produtos" class="form-label">Produtos (Formato JSON)</label>
-                        <textarea class="form-control" name="produtos" placeholder='[{"nome": "Produto A", "quantidade_estoque": 3, "quantidade": 1, "preco": 50, "produto__c": "id_1"}]' required></textarea>
+                        <select class="form-select" name="produto" id="produto">
+                            {% for produto in produtos %}
+                            <option value="{{ produto['nome'] }}">{{ produto['nome'] }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
-                        <label for="valor_total" class="form-label">Valor Total</label>
-                        <input type="number" class="form-control" name="valor_total" required>
+                        <label for="quantidade" class="form-label"> Quantidade: </label>
+                        <input type="number" name="quantidade" id="quantidade" required>
                     </div>
+                    <label for="valor_total" class="form-label" id="total">Total: R$ 0.00</label>
                     <div class="text-center">
                         <button type="submit" class="btn btn-success px-5">Salvar Venda</button>
                     </div>
@@ -120,4 +126,36 @@
             </div>
         </div>
     </div>
+
+    <script>
+
+        // Produtos vindo do template
+        const produtos = {{ produtos | tojson }};
+
+        // Capturar os elementos do DOM
+        const quantidadeInput = document.querySelector("#quantidade"); // Input de quantidade
+        const produtoInput = document.querySelector("#produto"); // Input do nome do produto
+        const totalLabel = document.querySelector("#total"); // Label para exibir o total
+
+        // Adicionar eventos de mudança aos inputs
+        quantidadeInput.addEventListener("input", calcularTotal);
+        produtoInput.addEventListener("input", calcularTotal);
+
+        function calcularTotal() {
+            const nomeProduto = produtoInput.value; // Nome do produto selecionado
+            const quantidade = parseFloat(quantidadeInput.value) || 0; // Quantidade (com fallback para 0)
+
+            // Encontrar o produto pelo nome
+            const produtoSelecionado = produtos.find(produto => produto.nome === nomeProduto);
+
+            if (produtoSelecionado) {
+                const preco = produtoSelecionado.preco; // Preço do produto
+                const total = preco * quantidade; // Calcular o total
+                totalLabel.textContent = `Total: R$ ${total.toFixed(2)}`; // Atualizar a label com o total formatado
+            } else {
+                totalLabel.textContent = "Total: R$ 0.00"; // Resetar caso o produto não seja encontrado
+            }
+        }
+</script>
+
 {% endblock %}
