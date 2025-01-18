@@ -112,6 +112,14 @@ body {
 .table-container td {
     padding: 12px;
     text-align: left;
+    margin: 1px;
+    background-color: black;
+}
+
+td{
+    margin: 4px;
+    outline-color: black;
+    box-shadow: inset 0 0 0 1px gray;
 }
 
 /* Botões */
@@ -134,4 +142,17 @@ body {
     .table-container table {
         font-size: 14px;
     }
+}
+
+.tooltip {
+  position: absolute;
+  background-color: #f1f1f1;
+  color: black;
+  padding: 10px;
+  border: 1px solid black;
+  z-index: 1;
+}
+
+#myInput:hover .tooltip {
+  visibility: visible;
 }

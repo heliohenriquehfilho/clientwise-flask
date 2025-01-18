@@ -30,7 +30,7 @@ vendas = []
 def obter_dados_tabela(nome_tabela, user_id=None):
     """Busca dados da Supabase com tratamento de exceção."""
     try:
-        query = supabase.table(nome_tabela).select("nome")
+        query = supabase.table(nome_tabela).select("*")
         if user_id:
             query = query.eq("user_id", user_id)
         dados = query.execute().data
@@ -226,7 +226,7 @@ def clientes():
 
     if request.method == "POST":
         # Atualizar cliente
-        cliente_id = request.form.get("client_id")
+        cliente_id = user_id
         nome = request.form.get("nome")
         contato = request.form.get("contato")
         endereco = request.form.get("endereco")
@@ -297,11 +297,54 @@ def finances():
     return render_template('finances.html')
 
 # Rota para gerenciador de investimentos
-@app.route('/investments')
+@app.route('/investments', methods=["GET", "POST"])
 def investments():
+    user_id = session['user_id']
+
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return render_template('investments.html')
+
+    else:
+        if request.method == "POST":
+            user_id = user_id
+            nome = request.form.get("nome")
+            descricao = request.form.get("descricao")
+            valor = float(request.form.get("valor"))
+            tipo = request.form.get("pagamento")
+            duracao = float(request.form.get("duracao"))
+
+            if duracao == "0.1":
+                duracao = 1.0
+
+            valor_total = duracao * valor
+            status = True
+            pagamentos = 0
+            encerrado = False
+            historico_pagamentos = []
+
+            investimento = {
+                "user_id": user_id,
+                "nome": nome,
+                "descricao": descricao,
+                "valor": valor,
+                "tipo_pagamento": tipo,
+                "duracao": int(duracao),
+                "valor_total": valor_total,
+                "status":status,
+                "pagamentos": pagamentos,
+                "encerrado": encerrado,
+                "historico_pagamentos": historico_pagamentos
+            }
+
+            supabase.table("investimento").insert(investimento).execute()
+            flash("Cliente atualizado com sucesso!", "success")
+            return redirect(url_for("investments"))
+
+    investimentos = obter_dados_tabela("investimento", user_id)
+    investimentos_df = pd.DataFrame(investimentos)
+    print(investimentos_df)
+
+    return render_template('investments.html', investimentos_df=investimentos_df.to_dict('records'))
 
 @app.route('/cadastro_venda', methods=["GET", "POST"])
 def cadastro_venda():
