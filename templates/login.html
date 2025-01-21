@@ -1,22 +1,217 @@
-{% extends "base.html" %}
 {% block content %}
 <head>
+    <meta name="google-adsense-account" content="ca-pub-4415407797807365">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>{{ title if title else "ClientWise" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4415407797807365"
+        crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Vendas</title>
-    <!-- Adicionando o CSS do Bootstrap 5 -->
+    <title>Client Wise - Sua Solução de Negócios</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <meta name="google-adsense-account" content="ca-pub-4415407797807365">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4415407797807365"
-     crossorigin="anonymous"></script>
+
+    <style>
+        .login-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            border-radius: 10px;
+        }
+        .hero-section {
+            background-size: cover;
+            color: #fff;
+            text-align: center;
+            padding: 5rem 1rem;
+            background-image: url(https://ideiaconsultoria.com.br/wp-content/uploads/2015/05/Depositphotos_21823959_s.jpg);
+        }
+        .hero-section h1 {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+        .hero-section p {
+            font-size: 1.25rem;
+            margin-top: 1rem;
+        }
+        .feature-card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        .modal-header {
+            border-bottom: none;
+        }
+        .modal-footer {
+            border-top: none;
+        }
+    </style>
 </head>
-<h2>Login</h2>
-<form method="POST" action="{{ url_for('login') }}">
-    <label for="email">Email:</label>
-    <input type="email" id="email" name="email" required>
-    <label for="password">Senha:</label>
-    <input type="password" id="password" name="password" required>
-    <button type="submit">Entrar</button>
-    <p>Não tem uma conta? <a href="{{ url_for('register') }}">Registre-se</a>.</p>
-</form>
+
+<body>
+    <!-- Login Button -->
+    <div class="login-button">
+        <button class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#registerModal">Registrar</button>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1>Bem-vindo à Client Wise</h1>
+        <p>A solução inteligente para impulsionar o crescimento do seu negócio.</p>
+    </div>
+
+    <!-- Functionalities Section -->
+    <div class="container my-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Nossas Funcionalidades</h2>
+            <p class="text-muted">Descubra como podemos ajudar a transformar sua empresa</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Gerenciamento de Estoque</h5>
+                        <p class="card-text">Tenha total controle do seu estoque em tempo real.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Gestão de Clientes</h5>
+                        <p class="card-text">Organize as informações dos seus clientes com facilidade.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Relatórios Inteligentes</h5>
+                        <p class="card-text">Tome decisões estratégicas baseadas em dados precisos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{{ url_for('login_handler') }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Entrar</button>
+                        <p class="text-muted small">Não tem uma conta? <a href="{{ url_for('register') }}">Registre-se</a>.</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testimonials Section -->
+    <div class="bg-light py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">O que nossos clientes dizem</h2>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow">
+                        <div class="card-body">
+                            <p>"A Client Wise transformou a forma como gerencio meu negócio. Recomendo a todos!"</p>
+                            <h6 class="fw-bold">- João Silva</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow">
+                        <div class="card-body">
+                            <p>"Simples, prática e eficiente. Ferramenta essencial para pequenas empresas."</p>
+                            <h6 class="fw-bold">- Maria Santos</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow">
+                        <div class="card-body">
+                            <p>"O suporte é incrível e os relatórios são muito úteis para decisões estratégicas."</p>
+                            <h6 class="fw-bold">- Pedro Oliveira</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Registro -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registerModalLabel">Registrar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="modal-body">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                        <div>
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Registrar</button>
+                        <p class="text-muted small">Já tem uma conta? <a href="{{ url_for('login_handler') }}">Faça login</a>.</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Script para reabrir o modal em caso de erro
+        {% if 'error' in get_flashed_messages(with_categories=false) %}
+        var registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+        registerModal.show();
+        {% endif %}
+    </script>
+    
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 {% endblock %}

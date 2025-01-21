@@ -8,6 +8,8 @@ import datetime
 import os
 import re
 
+from routes.login import login
+
 # Initial setup
 load_dotenv()
 app = Flask(__name__)
@@ -64,43 +66,32 @@ def index():
         return render_template('dashboard.html', user_id=session['user_id'])
     return render_template('login.html')
 
-# Rota para registro
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
+        print(f"Tentando registrar: {email}, {password}")  # Log para debug
         if not is_valid_email(email):
             flash("Email inválido. Certifique-se de incluir um domínio válido.", "error")
         else:
             try:
                 response = supabase.auth.sign_up({"email": email, "password": password})
+                print(f"Resposta Supabase: {response}")  # Log para debug
                 if response.user:
                     flash("Usuário registrado com sucesso! Confirme o email recebido.", "success")
-                    return redirect(url_for('login'))
+                    return redirect(url_for('login_handler'))
                 else:
                     flash("Erro ao registrar usuário.", "error")
             except Exception as e:
+                print(f"Erro Supabase: {e}")  # Log para debug
                 flash(f"Erro ao registrar usuário: {e}", "error")
-    return render_template('register.html')
+    return render_template('login.html')
 
 # Rota para login
 @app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        try:
-            response = supabase.auth.sign_in_with_password({"email": email, "password": password})
-            if response.user:
-                session['user_id'] = response.user.id
-                flash("Login realizado com sucesso!", "success")
-                return redirect(url_for('dashboard'))
-            else:
-                flash("Email ou senha inválidos.", "error")
-        except Exception as e:
-            flash(f"Erro ao autenticar: {e}", "error")
-    return render_template('login.html')
+def login_handler():
+    return login(supabase)
 
 # Rota para logout
 @app.route('/logout')
@@ -219,12 +210,33 @@ min_date = datetime.date(1900, 1, 1)
 @app.route("/clientes", methods=["GET", "POST"])
 def clientes():
     user_id = session['user_id']
+    # Recuperar clientes e vendas do banco de dados
     clientes = supabase.table("clientes").select("*").eq("user_id", user_id).execute().data
     vendas = supabase.table("vendas").select("*").eq("user_id", user_id).execute().data
 
-    # Convertendo a coluna 'ativo' de True/False para texto
+    # Dados para o gráfico de vendas (agrupando por mês, como exemplo)
+    vendas_por_mes = {}
+    for venda in vendas:
+        mes = venda["data_venda"].split("-")[1]  # Supondo que a data está no formato "YYYY-MM-DD"
+        vendas_por_mes[mes] = vendas_por_mes.get(mes, 0) + venda["valor"]
+
+    vendas_labels = list(vendas_por_mes.keys())
+    vendas_values = list(vendas_por_mes.values())
+
+    # Dados para o gráfico de clientes ativos/inativos
+    ativos = sum(1 for cliente in clientes if cliente["ativo"])
+    inativos = len(clientes) - ativos
+
+        # Convertendo a coluna 'ativo' de True/False para texto
     for cliente in clientes:
         cliente["ativo"] = "Ativo" if cliente["ativo"] else "Inativo"
+
+    # Calcular Vendas x Clientes
+    vendas_vs_clientes = {}
+    cliente_vendas = 0
+    for cliente in clientes:
+        cliente_vendas = sum(1 for venda in vendas if venda["cliente"] == cliente["nome"])  # contagem de vendas por cliente
+        vendas_vs_clientes[cliente["nome"]] = cliente_vendas + 1
 
     if request.method == "POST":
         # Atualizar cliente
@@ -262,9 +274,52 @@ def clientes():
 
         supabase.table("clientes").update(cliente_atualizado).eq("client__c", cliente_id).execute()
         flash("Cliente atualizado com sucesso!", "success")
-        return render_template("gerenciador_clientes.html", clientes=clientes, vendas=vendas, min_date=min_date)
 
-    return render_template("gerenciador_clientes.html", clientes=clientes, vendas=vendas, min_date=min_date)
+        clientes = supabase.table("clientes").select("*").eq("user_id", user_id).execute().data
+        vendas = supabase.table("vendas").select("*").eq("user_id", user_id).execute().data
+
+        # Dados para o gráfico de vendas (agrupando por mês, como exemplo)
+        vendas_por_mes = {}
+        for venda in vendas:
+            mes = venda["data_venda"].split("-")[1]  # Supondo que a data está no formato "YYYY-MM-DD"
+            vendas_por_mes[mes] = vendas_por_mes.get(mes, 0) + venda["valor"]
+
+        vendas_labels = list(vendas_por_mes.keys())
+        vendas_values = list(vendas_por_mes.values())
+
+        # Calcular Vendas x Clientes
+        vendas_vs_clientes = {}
+        for cliente in clientes:
+            cliente_vendas = sum(1 for venda in vendas if venda["cliente"] == cliente["nome"])  # contagem de vendas por cliente
+            vendas_vs_clientes[cliente["nome"]] = cliente_vendas  # Armazenar a quantidade de vendas por cliente
+
+
+        # Passar para o template
+        return render_template(
+            "gerenciador_clientes.html",
+            clientes=clientes,
+            vendas=vendas,
+            vendas_labels=vendas_labels,
+            vendas_values=vendas_values,
+            vendas_vs_clientes=vendas_vs_clientes,  # Passando os dados para o histograma
+            active_clients_count=ativos,
+            inactive_clients_count=inativos,
+            min_date=min_date
+        )
+
+
+    # Passar para o template
+    return render_template(
+        "gerenciador_clientes.html",
+        clientes=clientes,
+        vendas=vendas,
+        vendas_labels=vendas_labels,
+        vendas_values=vendas_values,
+        vendas_vs_clientes=vendas_vs_clientes,  # Passando os dados para o histograma
+        active_clients_count=ativos,
+        inactive_clients_count=inativos,
+        min_date=min_date
+    )
 
 
 @app.route('/sales', methods=['GET', 'POST'])
