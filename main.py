@@ -403,20 +403,61 @@ def investments():
     # Obtém os investimentos do banco de dados
     investimentos = obter_dados_tabela("investimento", user_id)
     investimentos_df = pd.DataFrame(investimentos)
+    investimentos_ativos = investimentos_df[investimentos_df['encerrado'] == False]
+    investimento_encerrado = investimentos_df[investimentos_df['encerrado'] == True]
 
     investimento_selecionado = request.args.get('investimento_selecionado')
 
     if investimento_selecionado:
         # Use .iterrows() para iterar pelas linhas do DataFrame
-        investimento = next((inv for _, inv in investimentos_df.iterrows() if inv['investimento__c'] == investimento_selecionado), None)
-        
-        if investimento is not None:
-            historico_pagamentos = json.loads(investimento.get("historico_pagamentos", "[]"))
+        investimento_series = investimentos_df[investimentos_df['investimento__c'] == investimento_selecionado]
+
+        if not investimento_series.empty:
+            investimento = investimento_series.iloc[0].to_dict()
+            historico_pagamentos = investimento.get("historico_pagamentos", [])
+            if isinstance(historico_pagamentos, str):
+                historico_pagamentos = json.loads(historico_pagamentos)
             pagamentos = pd.DataFrame(historico_pagamentos)
             pagamentos_vazios = pagamentos.empty  # Verifica se o DataFrame de pagamentos está vazio
-            return render_template('investments.html', investimento=investimento, pagamentos=pagamentos, pagamentos_vazios=pagamentos_vazios)
 
-    return render_template('investments.html', investimentos_df=investimentos_df.to_dict('records'))
+            investimentos = obter_dados_tabela("investimento", user_id)
+            investimentos_df = pd.DataFrame(investimentos)
+            investimentos_ativos = investimentos_df[investimentos_df['encerrado'] == False]
+            investimento_encerrado = investimentos_df[investimentos_df['encerrado'] == True]
+
+            return render_template(
+                'investments.html',
+                investimentos_df=investimentos_ativos.to_dict('records'),
+                investimento_encerrado=investimento_encerrado.to_dict('records'),
+                investimento=investimento,
+                pagamentos=pagamentos,
+                pagamentos_vazios=pagamentos_vazios,
+            )
+        
+        if investimento is not None:
+            historico_pagamentos = investimento.get("historico_pagamentos", [])
+            if isinstance(historico_pagamentos, str):
+                historico_pagamentos = json.loads(historico_pagamentos)
+            pagamentos = pd.DataFrame(historico_pagamentos)
+            pagamentos_vazios = pagamentos.empty  # Verifica se o DataFrame de pagamentos está vazio
+
+            investimentos = obter_dados_tabela("investimento", user_id)
+            investimentos_df = pd.DataFrame(investimentos)
+            investimentos_ativos = investimentos_df[investimentos_df['encerrado'] == False]
+            investimento_encerrado = investimentos_df[investimentos_df['encerrado'] == True]
+
+            return render_template(
+                'investments.html', 
+                investimentos_df=investimentos_ativos.to_dict('records'),
+                investimento_encerrado=investimento_encerrado.to_dict('records'), 
+                investimento=investimento, 
+                pagamentos=pagamentos, 
+                pagamentos_vazios=pagamentos_vazios)
+
+    return render_template(
+        'investments.html', 
+        investimentos_df=investimentos_ativos.to_dict('records'),
+        investimento_encerrado=investimento_encerrado.to_dict('records'))
 
 
 @app.route('/atualizar_investimento', methods=['POST', 'GET'])
@@ -517,12 +558,41 @@ def cadastrar_investimento():
         except Exception as e:
             flash(f"Erro ao cadastrar venda: {e}", "fail")
 
-        # Obtém os investimentos do banco de dados
         investimentos = obter_dados_tabela("investimento", user_id)
         investimentos_df = pd.DataFrame(investimentos)
+        investimentos_ativos = investimentos_df[investimentos_df['encerrado'] == False]
+        investimento_encerrado = investimentos_df[investimentos_df['encerrado'] == True]
 
-        return render_template('investments.html', investimentos_df=investimentos_df.to_dict('records'))
+        return render_template(
+            'investments.html', 
+            investimentos_df=investimentos_ativos.to_dict('records'),
+            investimento_encerrado=investimento_encerrado.to_dict('records'), 
+            investimento=investimento)
 
+@app.route('/deletar_investimento', methods=['POST', 'GET'])
+def deletar_investimento():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))  # Redireciona para login se o usuário não estiver autenticado.
+
+    if request.method == "POST":
+        investimento_id = request.form.get('investimento_id')
+
+        if not investimento_id:
+            return "ID do investimento não fornecido.", 400  # Retorna erro se o ID for inválido.
+        
+        # Atualiza o status do investimento para encerrado
+        supabase.table("investimento").delete().eq("investimento__c", investimento_id).execute()
+
+        investimentos = obter_dados_tabela("investimento", user_id)
+        investimentos_df = pd.DataFrame(investimentos)
+        investimentos_ativos = investimentos_df[investimentos_df['encerrado'] == False]
+        investimento_encerrado = investimentos_df[investimentos_df['encerrado'] == True]
+
+        return render_template(
+            'investments.html', 
+            investimentos_df=investimentos_ativos.to_dict('records'),
+            investimento_encerrado=investimento_encerrado.to_dict('records'))
 
 @app.route('/encerrar_investimento', methods=['POST', 'GET'])
 def encerrar_investimento():
@@ -538,14 +608,25 @@ def encerrar_investimento():
 
         # Atualiza o status do investimento para encerrado
         supabase.table("investimento").update({"encerrado": True}).eq("investimento__c", investimento_id).execute()
+        investimentos = obter_dados_tabela("investimento", user_id)
+        investimentos_df = pd.DataFrame(investimentos)
+        investimentos_ativos = investimentos_df[investimentos_df['encerrado'] == False]
+        investimento_encerrado = investimentos_df[investimentos_df['encerrado'] == True]
 
-        # Redireciona para a página de investimentos
-        return redirect(url_for('investments'))
+        return render_template(
+            'investments.html', 
+            investimentos_df=investimentos_ativos.to_dict('records'),
+            investimento_encerrado=investimento_encerrado.to_dict('records'))
 
-    # Obtém e exibe os dados dos investimentos
     investimentos = obter_dados_tabela("investimento", user_id)
     investimentos_df = pd.DataFrame(investimentos)
-    return render_template('investments.html', investimentos_df=investimentos_df.to_dict('records'))
+    investimentos_ativos = investimentos_df[investimentos_df['encerrado'] == False]
+    investimento_encerrado = investimentos_df[investimentos_df['encerrado'] == True]
+
+    return render_template(
+        'investments.html', 
+        investimentos_df=investimentos_ativos.to_dict('records'),
+        investimento_encerrado=investimento_encerrado.to_dict('records'))
 
 
 if __name__ == "__main__":

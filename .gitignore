@@ -1,77 +1,16 @@
-# Byte-compiled / optimized / compiled Python files
+# Ignorar diretórios do Python
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
+*.pyo
+*.pyd
 
-# Distribution / packaging
-.Python
-env/
+# Ignorar o diretório de ambiente virtual (se estiver usando)
 venv/
-ENV/
-env.bak/
 .env
-*.egg-info/
-.dist/
-build/
-*.egg
 
-# Flask settings
-instance/
-*.db
-*.sqlite3
-
-# Logs and databases
-*.log
-*.sql
-*.sqlite
-*.db
-
-# Environment variables
-.env
-*.env
-.env.local
-.env.*
-
-# IDE / Editor specific files
+# Ignorar arquivos de configuração do editor de código
 .vscode/
 .idea/
-*.swp
-*~
-*.bak
-*.tmp
-*.pid
-*.seed
-*.cover
 
-# Pytest
-.cache/
-
-# MacOS
-.DS_Store
-
-# PyInstaller
-*.spec
-
-# Jupyter Notebook checkpoints
+# Ignorar arquivos do Jupyter Notebook (se estiver usando)
 .ipynb_checkpoints/
-
-# Coverage reports
-htmlcov/
-.coverage
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-
-# Docker
-*.dockerfile
-*.tar
-
-# Miscellaneous
-*.log
-*.out
-*.bak
-*.tmp
-*.lock
-*.pid
