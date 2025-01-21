@@ -1,9 +1,11 @@
 from logging import exception
 
 from flask import Flask, render_template, request, session, redirect, url_for, flash
+from flask import jsonify
 from supabase import create_client
 from dotenv import load_dotenv
 import pandas as pd
+import json
 import datetime
 import os
 import re
@@ -394,54 +396,157 @@ def finances():
         return redirect(url_for('login'))
     return render_template('finances.html')
 
-# Rota para gerenciador de investimentos
 @app.route('/investments', methods=["GET", "POST"])
 def investments():
     user_id = session['user_id']
 
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    else:
-        if request.method == "POST":
-            user_id = user_id
-            nome = request.form.get("nome")
-            descricao = request.form.get("descricao")
-            valor = float(request.form.get("valor"))
-            tipo = request.form.get("pagamento")
-            duracao = float(request.form.get("duracao"))
-
-            if duracao == "0.1":
-                duracao = 1.0
-
-            valor_total = duracao * valor
-            status = True
-            pagamentos = 0
-            encerrado = False
-            historico_pagamentos = []
-
-            investimento = {
-                "user_id": user_id,
-                "nome": nome,
-                "descricao": descricao,
-                "valor": valor,
-                "tipo_pagamento": tipo,
-                "duracao": int(duracao),
-                "valor_total": valor_total,
-                "status":status,
-                "pagamentos": pagamentos,
-                "encerrado": encerrado,
-                "historico_pagamentos": historico_pagamentos
-            }
-
-            supabase.table("investimento").insert(investimento).execute()
-            flash("Cliente atualizado com sucesso!", "success")
-            return redirect(url_for("investments"))
-
+    # Obtém os investimentos do banco de dados
     investimentos = obter_dados_tabela("investimento", user_id)
     investimentos_df = pd.DataFrame(investimentos)
 
+    investimento_selecionado = request.args.get('investimento_selecionado')
+
+    if investimento_selecionado:
+        # Use .iterrows() para iterar pelas linhas do DataFrame
+        investimento = next((inv for _, inv in investimentos_df.iterrows() if inv['investimento__c'] == investimento_selecionado), None)
+        
+        if investimento is not None:
+            historico_pagamentos = json.loads(investimento.get("historico_pagamentos", "[]"))
+            pagamentos = pd.DataFrame(historico_pagamentos)
+            pagamentos_vazios = pagamentos.empty  # Verifica se o DataFrame de pagamentos está vazio
+            return render_template('investments.html', investimento=investimento, pagamentos=pagamentos, pagamentos_vazios=pagamentos_vazios)
+
     return render_template('investments.html', investimentos_df=investimentos_df.to_dict('records'))
+
+
+@app.route('/atualizar_investimento', methods=['POST', 'GET'])
+def atualizar_investimento():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Usuário não autenticado"}), 401
+
+    if not request.is_json:
+        return jsonify({"error": "Requisição deve ser JSON"}), 400
+
+    data = request.get_json()
+
+    # Validação dos dados recebidos
+    investment_id = data.get('investment_id')
+    pagamento_data = data.get('data_pagamento')
+    pagamento_valor = data.get('valor_pagamento')
+    sentido = data.get('sentido', True)
+    encerrar = data.get('encerrar', False)
+
+    if not investment_id or not pagamento_data or not pagamento_valor:
+        return jsonify({"error": "Dados insuficientes"}), 400
+
+    try:
+        pagamento_valor = float(pagamento_valor)
+    except ValueError:
+        return jsonify({"error": "Valor do pagamento inválido"}), 400
+
+    # Obtém o investimento específico do banco de dados
+    investimentos = obter_dados_tabela("investimento", user_id)
+    investimento = next((inv for inv in investimentos if inv["investimento__c"] == investment_id), None)
+
+    if not investimento:
+        return jsonify({"error": "Investimento não encontrado"}), 404
+
+    # Atualização do histórico de pagamentos
+    historico_pagamentos = json.loads(investimento.get("historico_pagamentos", "[]"))
+    historico_pagamentos.append({"data": pagamento_data, "valor": pagamento_valor})
+
+    # Atualização do contador de pagamentos e cálculo do restante
+    pagamentos = investimento.get("pagamentos", 0) + 1
+    duracao = investimento.get("duracao", 0)
+    restante = max(0, (duracao - pagamentos) * investimento.get("valor", 0))
+
+    # Atualização do status do investimento
+    investimento["sentido"] = sentido
+    investimento["encerrado"] = encerrar or not sentido
+    investimento["historico_pagamentos"] = json.dumps(historico_pagamentos)  # Salva como string JSON
+    investimento["pagamentos"] = pagamentos
+
+    # Atualiza o banco de dados
+    supabase.table("investimento").update({
+        "sentido": investimento["sentido"],
+        "encerrado": investimento["encerrado"],
+        "historico_pagamentos": investimento["historico_pagamentos"],
+        "pagamentos": pagamentos
+    }).eq("investimento__c", investment_id).execute()
+
+    # Mensagem de retorno
+    if investimento["encerrado"]:
+        message = "Investimento encerrado com sucesso!"
+    else:
+        message = f"Pagamento adicionado com sucesso! Restante a pagar: R$ {restante:.2f}"
+
+    return jsonify({"message": message}), 200
+
+
+@app.route('/cadastrar_investimento', methods=['POST', 'GET'])
+def cadastrar_investimento():
+    user_id = session.get('user_id')
+
+    if request.method == "POST":
+        nome = request.form.get("nome")
+        descricao = request.form.get("descricao")
+        valor = float(request.form.get("valor"))
+        tipo = request.form.get("pagamento")
+        duracao = int(request.form.get("duracao"))
+
+        valor_total = duracao * valor
+
+        investimento = {
+            "user_id": user_id,
+            "nome": nome,
+            "descricao": descricao,
+            "valor": valor,
+            "tipo_pagamento": tipo,
+            "duracao": duracao,
+            "valor_total": valor_total,
+            "status": True,
+            "pagamentos": 0,
+            "encerrado": False,
+            "historico_pagamentos": []
+        }
+
+        try:
+            supabase.table("investimento").insert(investimento).execute()
+            flash("Venda cadastrada com sucesso!", "success")
+        except Exception as e:
+            flash(f"Erro ao cadastrar venda: {e}", "fail")
+
+        # Obtém os investimentos do banco de dados
+        investimentos = obter_dados_tabela("investimento", user_id)
+        investimentos_df = pd.DataFrame(investimentos)
+
+        return render_template('investments.html', investimentos_df=investimentos_df.to_dict('records'))
+
+
+@app.route('/encerrar_investimento', methods=['POST', 'GET'])
+def encerrar_investimento():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))  # Redireciona para login se o usuário não estiver autenticado.
+
+    if request.method == "POST":
+        investimento_id = request.form.get('investimento_id')
+
+        if not investimento_id:
+            return "ID do investimento não fornecido.", 400  # Retorna erro se o ID for inválido.
+
+        # Atualiza o status do investimento para encerrado
+        supabase.table("investimento").update({"encerrado": True}).eq("investimento__c", investimento_id).execute()
+
+        # Redireciona para a página de investimentos
+        return redirect(url_for('investments'))
+
+    # Obtém e exibe os dados dos investimentos
+    investimentos = obter_dados_tabela("investimento", user_id)
+    investimentos_df = pd.DataFrame(investimentos)
+    return render_template('investments.html', investimentos_df=investimentos_df.to_dict('records'))
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

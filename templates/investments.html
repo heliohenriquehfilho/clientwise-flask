@@ -6,117 +6,305 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-adsense-account" content="ca-pub-4415407797807365">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-
     <title>{{ title if title else "ClientWise" }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4415407797807365"
      crossorigin="anonymous"></script>
 </head>
 
-<div class="container my-4">
-    <h2>Gerenciamento de Investimentos</h2>
-    <p>Aqui você pode gerenciar seus investimentos!!.</p>
-</div>
-
-<br>
-<br>
-
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white text-center">
-                <strong>Cadastro de investimento</strong>
+<div class="container my-5">
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">Gerenciamento de Investimentos</h1>
+        <p class="text-muted">Organize e acompanhe seus investimentos de forma simples e eficiente.</p>
     </div>
-    <div class="container my-4">
-        <form method="POST" enctype="multipart/form-data">
-            <div id="form-manual">
-                <div class="mb-3">
-                    <label for="nome">Nome da Campanha:</label>
-                    <input type="text" name="nome" class="form-control">
+
+    <div class="card shadow mb-5">
+        <div class="card-header bg-primary text-white text-center">
+            <h2 class="h5">Cadastro de Investimento</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data" action="/cadastrar_investimento">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="nome" class="form-label">Nome da Campanha</label>
+                        <input type="text" name="nome" id="nome" class="form-control" placeholder="Digite o nome">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <input type="text" name="descricao" id="descricao" class="form-control" placeholder="Digite uma breve descrição">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="valor" class="form-label">Valor Investido</label>
+                        <input type="number" id="valor" name="valor" class="form-control" placeholder="0.00" step="any">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="pagamento" class="form-label">Tipo de Pagamento</label>
+                        <select name="pagamento" id="pagamento" class="form-select">
+                            <option value="mensal">Mensal</option>
+                            <option value="anual">Anual</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="duracao" class="form-label">Recorrência (em anos ou meses)</label>
+                        <input type="number" name="duracao" id="duracao" class="form-control" placeholder="Exemplo: 12">
+                    </div>
+                    <div class="col-12">
+                        <label for="valor_total_label" class="form-label">Valor Total do Investimento</label>
+                        <input type="text" id="valor_total_label" class="form-control bg-light" readonly>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label for="descricao">Descrição:</label>
-                    <input type="text" name="descricao" class="form-control">
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn btn-primary">Cadastrar</button>
                 </div>
-                <div class="mb-3">
-                    <label for="valor">Valor Investido:</label>
-                    <input type="number" id="valor" name="valor" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label for="tipo">Tipo de Pagamento:</label>
-                    <select name="pagamento" class="form-control">
-                        <option value="mensal" class="form-control" name="tipo">Mensal</option>
-                        <option value="anual" class="form-control" name="tipo">Anual</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="duracao">Recorrencia (em anos ou meses):</label>
-                    <input type="number" name="duracao" id="duracao" class="form-control" placeholder=""0.1" para recorrência indefinida">
-                </div>
-                <div class="mb-3">
-                    <label for="valor_total"> Valor Total do Investimento:</label>
-                    <label id="valor_total_label" class="form-control">0.00</label>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Cadastrar</button>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
-<br>
-
-<div class="card mb-4">
+    <div class="card shadow">
         <div class="card-header bg-secondary text-white text-center">
-            <strong>Lista de Investimentos</strong>
+            <h2 class="h5">Lista de Investimentos</h2>
         </div>
         <div class="card-body">
             <table class="table table-striped table-hover">
-                <thead>
+                <thead class="table-dark">
                     <tr>
+                        <th></th>
                         <th>Nome</th>
-                        <th>descrição</th>
+                        <th>Descrição</th>
                         <th>Valor</th>
                         <th>Duração</th>
-                        <th>Ativo</th>
+                        <th>Encerrado</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for investimento in investimentos_df %}
                     <tr>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ investimento['investimento__c'] }}">
+                                Pagar $
+                            </button> 
+                        </td>
                         <td>{{ investimento['nome'] }}</td>
                         <td>{{ investimento['descricao'] }}</td>
                         <td>{{ investimento['valor'] }}</td>
                         <td>{{ investimento['duracao'] }}</td>
-                        <td>{{ 'Sim' if investimento['status'] else 'Não' }}</td>
+                        <td>{{ 'Sim' if investimento['encerrado'] == True else 'Não' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <!-- Dropdown e Tabela de Investimento Selecionado -->
+    <div class="mt-5">
+        <h2 class="h5 text-center">Detalhes do Investimento</h2>
+        <form method="GET">
+            <div class="mb-3">
+                <label for="investimento_selecionado" class="form-label">Selecione um Investimento</label>
+                <select name="investimento_selecionado" id="investimento_selecionado" class="form-select">
+                    {% for investimento in investimentos_df %}
+                    <option value="{{ investimento['investimento__c'] }}" 
+                        {% if investimento['investimento__c'] == request.args.get('investimento_selecionado') %}selected{% endif %}>
+                        {{ investimento['nome'] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Carregar Detalhes</button>
+        </form>
+    
+        {% if investimento %}
+        <div class="mt-4">
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Campo</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Nome</td>
+                        <td>{{ investimento['nome'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Tipo de Pagamento</td>
+                        <td>{{ investimento['tipo_pagamento'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Pagamentos</td>
+                        <td>{{ investimento['pagamentos'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Duração</td>
+                        <td>{{ investimento['duracao'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Histórico</td>
+                        <td>
+                            {% if not pagamentos_vazios %}
+                            <div class="mt-4">
+                                <table class="table table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Valor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for pagamento in pagamentos.iterrows() %}
+                                        <tr>
+                                            <td>{{ pagamento[1]['data'] }}</td>
+                                            <td>{{ pagamento[1]['valor'] }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p>Sem histórico de pagamentos.</p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <form method="POST" action="/encerrar_investimento">
+                <input type="hidden" name="investimento_id" value="{{ investimento['investimento__c'] }}">
+                <button type="submit" class="btn btn-danger">Encerrar Investimento</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    
+    
+    </div>
+</div>
+
+<!-- Modal de Edição -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Cadastrar Pagamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm" method="POST" action="/atualizar_investimento">
+                    <input type="hidden" name="investment_id" id="investment_id_modal">
+                    <div class="form-group mb-3">
+                        <label for="paymentDate">Data do Pagamento</label>
+                        <input type="date" name="paymentDate" class="form-control" id="paymentDate" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="paymentValue">Valor do Pagamento</label>
+                        <input type="number" name="paymentValue" class="form-control" id="paymentValue" placeholder="0.00" required step="any">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="makeSense">Faz sentido continuar este investimento?</label>
+                        <input type="checkbox" id="makeSense" name="makeSense" class="form-check-input">
+                    </div>
+                    <div id="closeInvestment" class="form-group mb-3 d-none">
+                        <label for="closeInvestmentCheck">Encerrar este investimento?</label>
+                        <input type="checkbox" id="closeInvestmentCheck" name="closeInvestment" class="form-check-input">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Captura os elementos de entrada e a label do resultado
+    document.querySelectorAll('[data-id]').forEach(button => {
+        button.addEventListener('click', function () {
+            const investmentId = this.getAttribute('data-id');
+            document.getElementById('investment_id_modal').value = investmentId;
+        });
+    });
+
+    document.getElementById('makeSense').addEventListener('change', function() {
+        const closeInvestment = document.getElementById('closeInvestment');
+        closeInvestment.classList.toggle('d-none', this.checked);
+    });
+
+    document.getElementById('paymentForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        // Coleta os valores do formulário
+        const investmentId = document.getElementById('investment_id_modal').value;
+        const paymentDate = document.getElementById('paymentDate').value;
+        const paymentValue = parseFloat(document.getElementById('paymentValue').value) || 0;
+        const makeSense = document.getElementById('makeSense').checked;
+        const closeInvestment = document.getElementById('closeInvestmentCheck').checked;
+
+        // Validação de dados
+        if (!paymentDate) {
+            alert('Por favor, selecione uma data de pagamento.');
+            return;
+        }
+        if (paymentValue <= 0) {
+            alert('Por favor, insira um valor de pagamento válido.');
+            return;
+        }
+
+        // Cria os dados que serão enviados para o backend
+        const data = {
+            investment_id: investmentId,
+            data_pagamento: paymentDate,
+            valor_pagamento: paymentValue,
+            sentido: makeSense,
+            encerrar: closeInvestment
+        };
+
+        try {
+            // Faz a requisição POST para o backend
+            const response = await fetch('/atualizar_investimento', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            // Verifica se a resposta foi bem-sucedida
+            if (response.ok) {
+                const result = await response.json();
+                alert(result.message || 'Pagamento registrado com sucesso!');
+                // Fecha o modal
+                document.getElementById('editModal').querySelector('.btn-close').click();
+                // Opcional: Atualizar a página para refletir os novos dados
+                window.location.reload();
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Ocorreu um erro ao registrar o pagamento.');
+            }
+        } catch (error) {
+            console.error('Erro ao enviar o pagamento:', error);
+            alert('Erro ao conectar com o servidor. Tente novamente mais tarde.');
+        }
+    });
+
+</script>
+
+<script>
     const valorInput = document.getElementById('valor');
     const duracaoInput = document.getElementById('duracao');
     const resultLabel = document.getElementById('valor_total_label');
 
-    // Função para atualizar o valor total
     function updateResult() {
         const valor = parseFloat(valorInput.value) || 0;
         let duracao = parseFloat(duracaoInput.value) || 0;
 
-        // Verifica se a duração é "0.1"
         if (duracao === 0.1) {
-            duracao = 1; // Adota 1 como valor padrão
+            duracao = 1;
         }
 
-        // Calcula o resultado
         const result = valor * duracao;
-
-        // Atualiza o texto da label
-        resultLabel.textContent = result.toFixed(2);
+        resultLabel.value = result.toFixed(2);
     }
 
-    // Adiciona eventos para atualizar o resultado em tempo real
     valorInput.addEventListener('input', updateResult);
     duracaoInput.addEventListener('input', updateResult);
 </script>
