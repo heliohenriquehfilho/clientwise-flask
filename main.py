@@ -10,12 +10,14 @@ import datetime
 import os
 import re
 
-from routes.login import login
+from routes.login import login_bp
 
 # Initial setup
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
+
+app.register_blueprint(login_bp)
 
 # Supabase setup
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -82,7 +84,7 @@ def register():
                 print(f"Resposta Supabase: {response}")  # Log para debug
                 if response.user:
                     flash("Usuário registrado com sucesso! Confirme o email recebido.", "success")
-                    return redirect(url_for('login_handler'))
+                    return redirect(url_for('login.login'))
                 else:
                     flash("Erro ao registrar usuário.", "error")
             except Exception as e:
@@ -90,24 +92,12 @@ def register():
                 flash(f"Erro ao registrar usuário: {e}", "error")
     return render_template('login.html')
 
-# Rota para login
-@app.route('/login', methods=['GET', 'POST'])
-def login_handler():
-    return login(supabase)
-
 # Rota para logout
 @app.route('/logout')
 def logout():
     session.clear()
     flash("Logout realizado com sucesso.", "success")
     return redirect(url_for('index'))
-
-# Rota do dashboard
-@app.route('/dashboard')
-def dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('dashboard.html', user_id=session['user_id'])
 
 @app.route("/cadastro_cliente", methods=["GET", "POST"])
 def cadastro_cliente():
